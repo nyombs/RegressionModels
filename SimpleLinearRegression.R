@@ -112,3 +112,19 @@ to.lm = lm(mtcars$mpg ~ mtcars$wt)
 input = data.frame(X = 3)
 predict(to.lm,  input, interval = "predict")
 
+summary(mtcars$wt)
+
+local <- mtcars
+y <- local$mpg 
+local$wt <- local$wt/2
+fit <- lm(mtcars$mpg ~ I(mtcars$wt + mean(mtcars$wt)))
+confint(fit)
+
+
+fit <- lm(mpg ~ wt, data=mtcars)
+newdata <- data.frame(wt=3000/1000)
+predict(fit, newdata, interval=("prediction"))
+
+fit_num <- lm(mpg ~ wt, data=mtcars)
+fit_denom <- lm(mpg ~ 1, data=mtcars)
+sum(resid(fit_num)^2) / sum(resid(fit_denom)^2)
