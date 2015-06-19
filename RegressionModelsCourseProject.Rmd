@@ -1,0 +1,97 @@
+---
+title: 'Analysis: Transmission choice and its impact on fuel efficiency'
+author: "St??phane Nyombayire"
+date: "June 18, 2015"
+output: word_document
+---
+
+##Executive Summary
+  
+The study aims to identify the impact of the design of transmission (automatic vs. manual) on gas consumption (MPG). Using the mtcars data set, we used two linear regression models (simple linear regression model and a multivariate regression model) we found that manual transmissions are indeed better for fuel economy than automatic transmissions. The multivariate model performed better than the singular based predictor model. This suggests that we could have enhanced our model to find the ultimate model that maximize fuel efficiency. This is however out of scope for this assignment.
+
+
+## Exploratory Analysis
+```{r, echo=FALSE, cache=TRUE}
+data(mtcars)
+```
+```{r}
+str(mtcars)
+```
+
+Data frame with 32 observations on 11 variables. Variables of interests are mpg and am (0 = automatic, 1 = manual)
+
+Histogram #1: MPG distribution shape with a fitted density over the image
+
+Plot #2: Distribution of Manual versus Automatic transmission MPG
+
+```{r, echo=FALSE, fig.height=4, fig.width=8}
+par(mfrow = c(1,2))
+hist(mtcars$mpg, col = "blue", prob = TRUE, main = "MPG Distribution", xlab = "Miles per gallon")
+lines(density(mtcars$mpg), col = "red")
+boxplot(mtcars$mpg~mtcars$am, col = "blue", main = "MPG by transmission type")
+```
+
+# What is the most fuel efficient transmission?
+
+## 1. Single predictor regression model
+
+```{r, echo = TRUE}
+mtcars$am <- factor(mtcars$am)
+fit <- lm(mpg ~ am , data = mtcars)
+summary(fit)
+```
+
+The P-Value is smaller than 0.05, which shows that transmission is a valid addition to the model. Examining the coeffiecients, we find that for this simple model, 7.244 is the increase in MPG between the automatic and manual transmission on average.Thus, Manual in this simplistic model improves fuel efficiency significantly over the automatic transmission.
+
+## 2. Multivariate regression model
+
+Let's now look at ways we could have improved our previous model and see whether Manual transmission is indeed the better choice when it comes to fuel efficiency. We will first find the important predictor and see which ones correlate with our response variable (i.e: MPG).
+
+```{r, echo=FALSE}
+library('corrplot')
+library('car')
+```
+In order to visualize the correlation for the predictors, we will use corrplot to see how closely two pairs of predictors are correlated. As you can see below: cyl, hp, wt, disp are all negatively correlated to mpg.  
+```{r, echo = FALSE}
+data(mtcars)
+```
+
+```{r, echo = TRUE, fig.height=10, fig.width=16}
+corrplot(cor(mtcars))
+
+```
+
+Now, looking at the multivariable regression model with the additional predictors, we have the following:
+```{r, echo = TRUE}
+mtcars$am <- factor(mtcars$am)
+mtcars$cyl <- factor(mtcars$cyl)
+fit2 <- lm(mpg ~ wt + am + cyl + hp + disp, data = mtcars)
+sqrt(vif(fit2))
+fit2 <- lm(mpg ~ wt + am + cyl + hp, data = mtcars)
+summary(fit2)
+```
+
+For sanity check, we use vif to spot check any variance inflation amongst the factors. And as you can tell, both cyl and disp are pretty high which suggests that they are correlated. Thus, we removed disp in our final model. Examining the coeffiecients in the final model, we find that for this new model, 1.8 is the increase in MPG between the automatic and manual transmission on average while keeping all other predictors constant.
+
+## 3. Comparing models
+
+We will look at comparing the simple one predictor model to the multivariate one using ANOVA.
+
+```{r, echo=TRUE}
+fit <- lm(mpg ~ am , data = mtcars)
+fit2 <- update(fit, mpg ~  am + wt + cyl + hp)
+anova(fit,fit2)
+```
+By looking at the p Value is smaller than 0.01 so we know that the additional predictors are a welcome additions to our second model.
+
+In addition, by closely examining the residual vs. fitted plot, we see that the residuals are uncorrelated with the ???t, independent and identically distributed, with a mean of 0.
+```{r, echo=TRUE}
+par(mfrow = c(2,2))
+plot(fit2)
+
+```
+
+# Conclusion
+
+All the other predictors added to the model do not change the initial conclusion that manual transmission is a more efficient transmission type from the MPG perspective, so the answer for the first question is clearly: Manual is better than Automatic.
+For the second question, the multivariate model shows that - 1.8 is the increase in MPG between the automatic and manual transmission on average while keeping all other predictors constant.
